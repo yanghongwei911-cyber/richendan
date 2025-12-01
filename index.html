@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>杨总日程安排表 V8</title>
+    <title>杨总日程安排表 (云端版)</title>
     <style>
         :root {
             /* 基础色调：高级灰与纯白 */
-            --bg-body: #f5f7fa; /* 更柔和的灰蓝背景 */
+            --bg-body: #f5f7fa; 
             --card-bg: #ffffff;
             --text-main: #333333;
             --text-sub: #999999;
             
-            /* 强调色：更具活力的蓝与莫兰迪色系 */
+            /* 强调色 */
             --brand-blue: #007aff; 
-            --accent-bg: #f0f7ff; /* 悬停背景色 */
+            --accent-bg: #f0f7ff; 
             
             /* 优先级颜色 (莫兰迪色) */
-            --tag-urgent: #ff6b6b; /* 柔和红 */
-            --tag-important: #feca57; /* 柔和橙 */
-            --tag-normal: #e0e0e0; /* 浅灰 */
+            --tag-urgent: #ff6b6b; 
+            --tag-important: #feca57; 
+            --tag-normal: #e0e0e0; 
             
-            --purple: #a55eea; /* 行程专用紫 */
-            --green: #20bf6b; /* 完成绿 */
+            --purple: #a55eea; 
+            --green: #20bf6b; 
         }
 
         body {
@@ -32,7 +32,7 @@
             padding: 20px 10px;
             color: var(--text-main);
             overscroll-behavior-y: contain;
-            -webkit-font-smoothing: antialiased; /* 让字体更清晰 */
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
@@ -40,31 +40,59 @@
             margin: 0 auto;
             background: var(--card-bg);
             border-radius: 16px;
-            /* 更柔和的投影，制造悬浮感 */
             box-shadow: 0 8px 24px rgba(0,0,0,0.04);
             padding: 24px;
             min-height: 90vh;
+            position: relative;
         }
 
-        /* === 头部设计 === */
+        /* === 头部设计 (含云端按钮) === */
         header {
             text-align: center;
             margin-bottom: 24px;
+            position: relative;
         }
         h1 { margin: 0; font-size: 22px; color: #2c3e50; font-weight: 700; letter-spacing: -0.5px; }
         .subtitle { font-size: 12px; color: var(--text-sub); margin-top: 4px; text-transform: uppercase; letter-spacing: 2px; font-weight: 500;}
+        
+        .header-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
         .date-badge { 
             display: inline-block; 
             background: #fff; 
             border: 1px solid #eee;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
             padding: 4px 16px; 
             border-radius: 20px; 
             font-size: 13px; 
             color: var(--brand-blue); 
-            margin-top: 12px; 
             font-weight: 600; 
         }
+
+        /* 云端保存按钮 */
+        .btn-cloud-save {
+            background: linear-gradient(135deg, #007aff, #0056b3);
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,122,255,0.2);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-cloud-save:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,122,255,0.3); }
+        .btn-cloud-save:active { transform: translateY(1px); }
+        .btn-cloud-save.loading { opacity: 0.7; cursor: wait; }
 
         /* === 标签页 === */
         .tabs { display: flex; background: #f0f2f5; padding: 4px; border-radius: 10px; margin-bottom: 20px; }
@@ -102,42 +130,26 @@
         }
         .btn-add:hover { opacity: 0.8; }
 
-        /* === 任务列表 (紧凑 & 愉悦感优化) === */
+        /* === 任务列表 === */
         .list-group-title { font-size: 11px; color: #aaa; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; padding-left: 4px; }
 
         .task-row {
-            padding: 8px 10px; /* 紧凑间距 */
-            margin-bottom: 6px; /* 任务间留白 */
-            border-radius: 8px; /* 舒适的圆角 */
+            padding: 8px 10px; 
+            margin-bottom: 6px; 
+            border-radius: 8px; 
             background: #fff;
-            border: 1px solid transparent; /* 预留边框防抖动 */
+            border: 1px solid transparent; 
             transition: all 0.2s;
             position: relative;
         }
-        
-        /* 愉悦感核心：悬停效果 */
-        .task-row:hover {
-            background: var(--accent-bg);
-            border-color: #e1efff;
-            transform: translateY(-1px);
-        }
-        
+        .task-row:hover { background: var(--accent-bg); border-color: #e1efff; transform: translateY(-1px); }
         .task-row.dragging { opacity: 0.5; background: #f0f8ff; border: 2px dashed var(--brand-blue); }
         
-        /* 任务内容布局 */
         .task-main-line { display: flex; align-items: flex-start; }
-
-        /* 拖拽手柄 */
-        .drag-handle { 
-            padding: 4px 6px 0 0; cursor: move; color: #e0e0e0; font-size: 16px; 
-            display: flex; align-items: center; transition: color 0.2s;
-        }
-        .task-row:hover .drag-handle { color: #bbb; } /* 悬停时加深 */
-
-        /* 序列号 */
+        .drag-handle { padding: 4px 6px 0 0; cursor: move; color: #e0e0e0; font-size: 16px; display: flex; align-items: center; transition: color 0.2s; }
+        .task-row:hover .drag-handle { color: #bbb; } 
         .seq-num { font-size: 14px; font-weight: 700; color: #ccc; margin-right: 6px; margin-top: 4px; width: 20px; font-family: monospace; }
         
-        /* 完成按钮 */
         .check-btn { 
             width: 20px; height: 20px; border: 2px solid #ddd; border-radius: 6px; 
             margin-right: 10px; margin-top: 3px; flex-shrink: 0; display: flex; 
@@ -147,50 +159,22 @@
         .check-btn.checked { background: var(--green); border-color: var(--green); }
         .check-btn.checked::after { content: '✓'; color: #fff; font-size: 12px; font-weight: bold; }
 
-        /* 文本区域 */
         .content-wrapper { flex-grow: 1; margin-right: 8px; }
-        .editable-text { 
-            font-size: 15px; line-height: 1.4; outline: none; border-bottom: 1px dashed transparent; color: #333;
-        }
+        .editable-text { font-size: 15px; line-height: 1.4; outline: none; border-bottom: 1px dashed transparent; color: #333; }
         .editable-text:focus { background: rgba(0,122,255,0.05); border-bottom-color: var(--brand-blue); }
         .text-done { text-decoration: line-through; color: #bbb; }
         
-        /* 备注框 - 更精致 */
-        .remark-box {
-            margin-top: 4px;
-            margin-left: 64px; /* 对齐文字 */
-            display: none;
-            position: relative;
-        }
-        .remark-box::before {
-            content: '↳'; /* 视觉引导符号 */
-            position: absolute; left: -15px; top: 2px; color: #ddd; font-size: 12px;
-        }
-        .remark-input {
-            width: 95%; border: none; border-bottom: 1px dashed #e0e0e0; 
-            background: transparent; font-size: 13px; color: #555; padding: 2px 0; outline: none;
-            font-family: inherit;
-        }
+        .remark-box { margin-top: 4px; margin-left: 64px; display: none; position: relative; }
+        .remark-box::before { content: '↳'; position: absolute; left: -15px; top: 2px; color: #ddd; font-size: 12px; }
+        .remark-input { width: 95%; border: none; border-bottom: 1px dashed #e0e0e0; background: transparent; font-size: 13px; color: #555; padding: 2px 0; outline: none; font-family: inherit; }
         .remark-input:focus { border-bottom-color: var(--brand-blue); }
 
-        /* 底部信息栏 (日期时间) */
-        .task-meta-bar {
-            display: flex; justify-content: flex-end; align-items: center; margin-top: 2px;
-            font-size: 11px;
-        }
-        .meta-btn { 
-            color: var(--brand-blue); cursor: pointer; margin-right: 12px; 
-            background: rgba(0,122,255,0.08); padding: 1px 6px; border-radius: 4px;
-            font-weight: 500;
-        }
+        .task-meta-bar { display: flex; justify-content: flex-end; align-items: center; margin-top: 2px; font-size: 11px; }
+        .meta-btn { color: var(--brand-blue); cursor: pointer; margin-right: 12px; background: rgba(0,122,255,0.08); padding: 1px 6px; border-radius: 4px; font-weight: 500; }
         .meta-time { color: #aaa; font-family: -apple-system, monospace; }
         .meta-time strong { color: #555; font-weight: 600; margin-right: 3px; }
 
-        /* 优先级标签 - 胶囊样式 */
-        .priority-btn { 
-            font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-right: 6px; 
-            font-weight: 600; cursor: pointer; margin-top: 2px; transition: transform 0.1s;
-        }
+        .priority-btn { font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-right: 6px; font-weight: 600; cursor: pointer; margin-top: 2px; transition: transform 0.1s; }
         .priority-btn:active { transform: scale(0.95); }
         .p-normal { color: #999; background: #f0f0f0; border: 1px solid #eee; }
         .p-important { color: #fff; background: var(--tag-important); box-shadow: 0 2px 5px rgba(254,202,87,0.3); }
@@ -200,37 +184,52 @@
         .btn-del:hover { color: #ff4757; }
 
         /* === 行程样式 === */
-        .sched-row {
-            background: #fff; border-left: 4px solid var(--purple);
-            padding: 12px; margin-bottom: 10px; border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid #f9f9f9;
-        }
+        .sched-row { background: #fff; border-left: 4px solid var(--purple); padding: 12px; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid #f9f9f9; }
         .sched-date { font-weight: 700; color: var(--purple); font-size: 14px; margin-bottom: 4px; }
         .sched-content { font-size: 15px; color: #333; }
 
-        .sched-row.sched-history {
-            padding: 8px 12px; margin-bottom: 6px;
-            border-left: 3px solid #ddd; background: #fcfcfc;
-            display: flex; align-items: center;
-        }
+        .sched-row.sched-history { padding: 8px 12px; margin-bottom: 6px; border-left: 3px solid #ddd; background: #fcfcfc; display: flex; align-items: center; }
         .sched-history .sched-date { color: #aaa; font-weight: 500; width: 130px; margin-bottom: 0; font-size: 12px; }
         .sched-history .sched-content { color: #bbb; font-size: 13px; }
 
+        /* 状态提示 Toast */
         #toast { 
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); 
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
             color: #fff; padding: 8px 20px; border-radius: 20px; 
-            font-size: 13px; display: none; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 13px; display: none; z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* 加载遮罩 */
+        #loading-mask {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            z-index: 100;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            border-radius: 16px;
+            font-size: 14px; color: #666;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div id="loading-mask">
+        <div style="margin-bottom: 10px; font-size: 24px;">☁️</div>
+        <div>正在从云端同步数据...</div>
+    </div>
+
     <header>
         <h1>杨总日程安排表</h1>
-        <div class="subtitle">Yang's Schedule V8</div>
-        <div class="date-badge" id="headerDate">--</div>
+        <div class="subtitle">Yang's Schedule Cloud</div>
+        
+        <div class="header-controls">
+            <div class="date-badge" id="headerDate">--</div>
+            <button class="btn-cloud-save" id="saveBtn" onclick="saveToCloud()">
+                <span>☁️ 保存到云端</span>
+            </button>
+        </div>
     </header>
 
     <div class="tabs">
@@ -240,16 +239,14 @@
 
     <div id="view-todo" class="view-section active">
         <div class="input-box">
-            <textarea id="todoInput" placeholder="在此输入工作内容...&#10;支持批量粘贴，回车换行自动生成多条"></textarea>
+            <textarea id="todoInput" placeholder="输入工作内容... 支持批量粘贴，回车换行自动生成多条"></textarea>
             <div class="input-footer">
                 <span style="font-size:12px; color:#aaa;">⋮⋮ 拖拽可排序</span>
                 <button class="btn-add" onclick="addTodo()">添加</button>
             </div>
         </div>
-
         <div class="list-group-title">待办事项 (PENDING)</div>
         <div id="list-pending"></div>
-
         <div class="list-group-title" style="margin-top:24px;">已完成 (DONE)</div>
         <div id="list-done"></div>
     </div>
@@ -262,63 +259,136 @@
                 <button class="btn-add" style="background:var(--purple);" onclick="addSched()">添加行程</button>
             </div>
         </div>
-
         <div class="list-group-title">即将开始 (UPCOMING)</div>
         <div id="sched-upcoming"></div>
-
         <div class="list-group-title" style="margin-top:24px;">历史行程 (HISTORY)</div>
         <div id="sched-past"></div>
     </div>
 
 </div>
 
-<div id="toast">已保存</div>
+<div id="toast">提示信息</div>
 
 <script>
-    // === V8 数据 Key (沿用V7数据，防止丢失，如果想清空请改名) ===
-    let todoData = JSON.parse(localStorage.getItem('yang_todo_v7')) || [];
-    let schedData = JSON.parse(localStorage.getItem('yang_sched_v7')) || [];
+    // === 云端配置 ===
+    const BIN_ID = '692d1fd2d0ea881f400ab7fb';
+    const API_KEY = '$2a$10$NEHjOsfUfM1jAmhv/bKlAe1/0Zx4qaXfxjviJtcBeFus9q2IukiK6';
+    const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+    // === 核心数据 ===
+    let todoData = [];
+    let schedData = [];
 
     document.addEventListener('DOMContentLoaded', () => {
         refreshHeaderDate();
-        renderTodo();
-        renderSched();
+        initCloudData(); // 启动时拉取云端数据
     });
 
-    function saveTodo() { localStorage.setItem('yang_todo_v7', JSON.stringify(todoData)); }
-    function saveSched() { localStorage.setItem('yang_sched_v7', JSON.stringify(schedData)); }
+    // === 云端同步逻辑 ===
+    async function initCloudData() {
+        try {
+            const response = await fetch(BIN_URL, {
+                method: 'GET',
+                headers: {
+                    'X-Master-Key': API_KEY,
+                    'X-Bin-Meta': 'false' // 只获取数据，不要元数据
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // 如果云端是空的或者格式不对，容错处理
+                todoData = data.todo || [];
+                schedData = data.sched || [];
+                console.log("云端数据加载成功", data);
+            } else {
+                console.error("云端加载失败，使用本地缓存");
+                loadFromLocal();
+            }
+        } catch (error) {
+            console.error("网络错误，使用本地缓存", error);
+            loadFromLocal();
+            showToast("网络连接失败，已加载本地数据");
+        } finally {
+            document.getElementById('loading-mask').style.display = 'none'; // 隐藏遮罩
+            renderTodo();
+            renderSched();
+            // 加载完成后，顺便更新一下本地缓存，以防下次断网
+            saveToLocal(); 
+        }
+    }
+
+    async function saveToCloud() {
+        const btn = document.getElementById('saveBtn');
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '<span>⏳ 保存中...</span>';
+        btn.classList.add('loading');
+        btn.disabled = true;
+
+        const payload = {
+            todo: todoData,
+            sched: schedData
+        };
+
+        try {
+            const response = await fetch(BIN_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': API_KEY
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                showToast("✅ 云端保存成功！");
+                saveToLocal(); // 保存成功后也更新本地
+            } else {
+                showToast("❌ 保存失败，请检查网络");
+            }
+        } catch (error) {
+            showToast("❌ 网络错误");
+            console.error(error);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.classList.remove('loading');
+            btn.disabled = false;
+        }
+    }
+
+    // 本地存储作为备份/断网使用
+    function saveToLocal() {
+        localStorage.setItem('yang_todo_cloud', JSON.stringify(todoData));
+        localStorage.setItem('yang_sched_cloud', JSON.stringify(schedData));
+    }
+    function loadFromLocal() {
+        todoData = JSON.parse(localStorage.getItem('yang_todo_cloud')) || [];
+        schedData = JSON.parse(localStorage.getItem('yang_sched_cloud')) || [];
+    }
+
+    // === 通用逻辑 ===
     function showToast(msg) {
         const t = document.getElementById('toast');
         t.innerText = msg; t.style.display = 'block';
-        setTimeout(()=>t.style.display='none', 1500);
+        setTimeout(()=>t.style.display='none', 2000);
     }
-    
     function getTodayStr() {
         const d = new Date();
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${y}-${m}-${day}`;
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
-
-    // 获取格式化日期 MM-DD
     function getShortDateStr() {
         const d = new Date();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${m}-${day}`;
+        return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
-
     function getNowTimeStr() {
         const d = new Date();
         return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     }
-
     function refreshHeaderDate() {
         const d = new Date();
         const days = ['周日','周一','周二','周三','周四','周五','周六'];
-        document.getElementById('headerDate').innerText = 
-            `${d.getMonth()+1}月${d.getDate()}日 ${days[d.getDay()]}`;
+        document.getElementById('headerDate').innerText = `${d.getMonth()+1}月${d.getDate()}日 ${days[d.getDay()]}`;
     }
     function switchTab(t) {
         document.querySelectorAll('.view-section').forEach(e=>e.classList.remove('active'));
@@ -328,19 +398,14 @@
         else document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
     }
 
-    // ===========================
-    // 1. 工作待办 (UI优化版)
-    // ===========================
+    // === 工作待办逻辑 ===
     function addTodo() {
         const input = document.getElementById('todoInput');
         const text = input.value.trim();
         if(!text) return;
-
         const lines = text.split('\n');
         lines.forEach(line => {
-            let cleanLine = line.trim();
-            cleanLine = cleanLine.replace(/^[\d]+[\.\、\s]+/, ''); 
-
+            let cleanLine = line.trim().replace(/^[\d]+[\.\、\s]+/, ''); 
             if(cleanLine) {
                 todoData.push({
                     id: Date.now() + Math.random().toString().substr(2,5),
@@ -349,17 +414,15 @@
                     done: false,
                     remark: '', 
                     createTime: getNowTimeStr(), 
-                    createDate: getShortDateStr() // 存 MM-DD
+                    createDate: getShortDateStr()
                 });
             }
         });
-        
-        saveTodo();
-        renderTodo();
+        saveToLocal(); renderTodo();
         input.value = '';
     }
 
-    // 拖拽逻辑
+    // 拖拽
     let dragSrcIndex = null;
     function handleDragStart(e) { dragSrcIndex = +this.getAttribute('data-index'); this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
     function handleDragOver(e) { if (e.preventDefault) e.preventDefault(); e.dataTransfer.dropEffect = 'move'; return false; }
@@ -369,27 +432,21 @@
         if (dragSrcIndex !== null && dragSrcIndex !== targetIndex) {
             const item = todoData.splice(dragSrcIndex, 1)[0];
             todoData.splice(targetIndex, 0, item);
-            saveTodo(); renderTodo();
+            saveToLocal(); renderTodo();
         }
         return false;
     }
-    function handleDragEnd(e) {
-        this.classList.remove('dragging');
-        document.querySelectorAll('.task-row').forEach(row => row.classList.remove('dragging'));
-    }
+    function handleDragEnd(e) { this.classList.remove('dragging'); document.querySelectorAll('.task-row').forEach(row => row.classList.remove('dragging')); }
 
     function renderTodo() {
         const pendingEl = document.getElementById('list-pending');
         const doneEl = document.getElementById('list-done');
         pendingEl.innerHTML = ''; doneEl.innerHTML = '';
-
         let seqCounter = 1;
 
         todoData.forEach((item, index) => {
-            // 兼容旧数据：如果没有日期字段，给个默认值
-            const dateStr = item.createDate || '--'; 
+            const dateStr = item.createDate || getShortDateStr(); 
             const timeStr = item.createTime || '--:--';
-
             const div = document.createElement('div');
             div.className = 'task-row';
             
@@ -402,89 +459,64 @@
                 div.addEventListener('dragend', handleDragEnd);
             }
 
-            // 优先级文字映射
             let pText = '普通', pClass = 'p-normal';
             if(item.priority === 'important') { pText = '重要'; pClass = 'p-important'; }
             if(item.priority === 'urgent') { pText = '紧急'; pClass = 'p-urgent'; }
 
-            // 元素显隐
             const seqHtml = !item.done ? `<div class="seq-num">${seqCounter++}.</div>` : '';
             const dragHtml = !item.done ? `<div class="drag-handle">⋮⋮</div>` : '';
 
             div.innerHTML = `
                 <div class="task-main-line">
-                    ${dragHtml}
-                    ${seqHtml}
+                    ${dragHtml} ${seqHtml}
                     <div class="check-btn ${item.done ? 'checked' : ''}" onclick="toggleDone('${item.id}')"></div>
-                    
                     <div class="content-wrapper">
-                        <div class="editable-text ${item.done ? 'text-done' : ''}" 
-                             contenteditable="true" 
-                             onblur="updateText('${item.id}', this)">${item.content}</div>
+                        <div class="editable-text ${item.done ? 'text-done' : ''}" contenteditable="true" onblur="updateText('${item.id}', this)">${item.content}</div>
                     </div>
-
                     <div class="priority-btn ${pClass}" onclick="changePriority('${item.id}')">${pText}</div>
                     <button class="btn-del" onclick="deleteTodo('${item.id}')">×</button>
                 </div>
-
                 <div class="remark-box" id="remark-box-${item.id}" style="display: ${item.remark ? 'block' : 'none'}">
-                    <input class="remark-input" 
-                           placeholder="补充进度..." 
-                           value="${item.remark || ''}" 
-                           onchange="updateRemark('${item.id}', this)">
+                    <input class="remark-input" placeholder="补充进度..." value="${item.remark || ''}" onchange="updateRemark('${item.id}', this)">
                 </div>
-
                 <div class="task-meta-bar">
                     <span class="meta-btn" onclick="toggleRemark('${item.id}')">📝 备注</span>
                     <span class="meta-time"><strong>${dateStr}</strong> ${timeStr}</span>
                 </div>
             `;
-
-            if(item.done) doneEl.appendChild(div);
-            else pendingEl.appendChild(div);
+            if(item.done) doneEl.appendChild(div); else pendingEl.appendChild(div);
         });
     }
 
     function toggleRemark(id) {
         const box = document.getElementById(`remark-box-${id}`);
-        if(box.style.display === 'none') {
-            box.style.display = 'block';
-            box.querySelector('input').focus();
-        } else {
-            const val = box.querySelector('input').value.trim();
-            if(!val) box.style.display = 'none';
-        }
+        if(box.style.display === 'none') { box.style.display = 'block'; box.querySelector('input').focus(); } 
+        else { if(!box.querySelector('input').value.trim()) box.style.display = 'none'; }
     }
-
-    function updateRemark(id, el) {
-        const item = todoData.find(t => t.id === id);
-        if(item) { item.remark = el.value.trim(); saveTodo(); showToast("备注已保存"); }
-    }
-    function toggleDone(id) { const i = todoData.find(t=>t.id===id); if(i){i.done=!i.done;saveTodo();renderTodo();} }
+    function updateRemark(id, el) { const i = todoData.find(t=>t.id===id); if(i) { i.remark = el.value.trim(); saveToLocal(); } }
+    function toggleDone(id) { const i = todoData.find(t=>t.id===id); if(i){i.done=!i.done; saveToLocal(); renderTodo();} }
     function changePriority(id) { 
         const i = todoData.find(t=>t.id===id); 
         if(i){ 
             if(i.priority==='normal')i.priority='important'; 
             else if(i.priority==='important')i.priority='urgent'; 
             else i.priority='normal'; 
-            saveTodo();renderTodo();
+            saveToLocal(); renderTodo();
         } 
     }
-    function updateText(id, el) { const i = todoData.find(t=>t.id===id); if(i && i.content!==el.innerText){i.content=el.innerText;saveTodo();showToast("已保存");} }
-    function deleteTodo(id) { if(confirm('删除此任务？')){ todoData=todoData.filter(t=>t.id!==id);saveTodo();renderTodo();} }
+    function updateText(id, el) { const i = todoData.find(t=>t.id===id); if(i && i.content!==el.innerText){i.content=el.innerText; saveToLocal();} }
+    function deleteTodo(id) { if(confirm('删除此任务？')){ todoData=todoData.filter(t=>t.id!==id); saveToLocal(); renderTodo();} }
 
-    // ===========================
-    // 2. 行程逻辑 (V7修复版逻辑保持不变)
-    // ===========================
+    // === 行程逻辑 ===
     function addSched() {
         const input = document.getElementById('schedInput');
         const text = input.value.trim();
         if(!text) return;
         
-        let startStr = '', endStr = '', contentStr = text;
         const currentYear = new Date().getFullYear();
         const datePattern = /(\d{1,2})[.\/-月](\d{1,2})/g;
         const datesFound = [...text.matchAll(datePattern)];
+        let startStr='', endStr='', contentStr=text;
 
         if (datesFound.length > 0) {
             const m1 = datesFound[0];
@@ -492,29 +524,16 @@
             if (datesFound.length >= 2) {
                 const m2 = datesFound[1];
                 endStr = `${currentYear}-${m2[1].padStart(2,'0')}-${m2[2].padStart(2,'0')}`;
-            } else {
-                endStr = startStr; 
-            }
-            contentStr = text.replace(datePattern, '').replace(/[—\-\s]+/, ' ').trim();
-            contentStr = contentStr.replace(/^[号日\s]+/, '').trim();
+            } else { endStr = startStr; }
+            contentStr = text.replace(datePattern, '').replace(/[—\-\s]+/, ' ').replace(/^[号日\s]+/, '').trim();
         } else {
-            alert("日期未识别，请以 '12.2' 开头");
-            return;
+            alert("日期未识别，请以 '12.2' 开头"); return;
         }
 
         if(!contentStr) contentStr = "行程安排";
-
-        schedData.push({
-            id: Date.now().toString(),
-            start: startStr,
-            end: endStr,
-            content: contentStr,
-            manualDone: false
-        });
-
+        schedData.push({ id: Date.now().toString(), start: startStr, end: endStr, content: contentStr, manualDone: false });
         schedData.sort((a,b) => new Date(a.start) - new Date(b.start));
-        saveSched();
-        renderSched();
+        saveToLocal(); renderSched();
         input.value = '';
     }
 
@@ -522,14 +541,12 @@
         const upEl = document.getElementById('sched-upcoming');
         const pastEl = document.getElementById('sched-past');
         upEl.innerHTML = ''; pastEl.innerHTML = '';
-
         const todayStr = getTodayStr(); 
         const daysMap = ['周日','周一','周二','周三','周四','周五','周六'];
 
         schedData.forEach(item => {
             const isPast = !item.manualDone && (item.end < todayStr);
             const isHistory = item.manualDone || isPast;
-
             const d1 = new Date(item.start);
             let dateText = `${d1.getMonth()+1}.${d1.getDate()} (${daysMap[d1.getDay()]})`;
             if(item.end && item.end !== item.start) {
@@ -538,34 +555,21 @@
             }
 
             const div = document.createElement('div');
-            
             if (isHistory) {
                 div.className = 'sched-row sched-history';
-                div.innerHTML = `
-                    <div class="sched-date">${dateText}</div>
-                    <div class="sched-content" title="${item.content}">${item.content}</div>
-                    <div style="font-size:16px; color:#ddd; cursor:pointer; padding-left:10px;" onclick="deleteSched('${item.id}')">×</div>
-                `;
+                div.innerHTML = `<div class="sched-date">${dateText}</div><div class="sched-content" title="${item.content}">${item.content}</div><div style="font-size:16px; color:#ddd; cursor:pointer; padding-left:10px;" onclick="deleteSched('${item.id}')">×</div>`;
                 pastEl.appendChild(div);
             } else {
                 div.className = 'sched-row';
-                div.innerHTML = `
-                    <div class="sched-date">${dateText}</div>
-                    <div class="editable-text sched-content" contenteditable="true" onblur="updateSchedText('${item.id}', this)">${item.content}</div>
-                    <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:11px; color:var(--brand-blue); font-weight:bold; cursor:pointer; background:#f0f7ff; padding:2px 8px; border-radius:10px;" onclick="toggleSchedDone('${item.id}')">✓ 完成归档</span>
-                        <span style="font-size:18px; color:#e0e0e0; cursor:pointer;" onclick="deleteSched('${item.id}')">×</span>
-                    </div>
-                `;
+                div.innerHTML = `<div class="sched-date">${dateText}</div><div class="editable-text sched-content" contenteditable="true" onblur="updateSchedText('${item.id}', this)">${item.content}</div><div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:11px; color:var(--brand-blue); font-weight:bold; cursor:pointer; background:#f0f7ff; padding:2px 8px; border-radius:10px;" onclick="toggleSchedDone('${item.id}')">✓ 完成归档</span><span style="font-size:18px; color:#e0e0e0; cursor:pointer;" onclick="deleteSched('${item.id}')">×</span></div>`;
                 upEl.appendChild(div);
             }
         });
     }
 
-    function toggleSchedDone(id) { const i = schedData.find(x=>x.id===id); if(i){i.manualDone=!i.manualDone;saveSched();renderSched();} }
-    function deleteSched(id) { if(confirm("删除此行程？")){ schedData=schedData.filter(x=>x.id!==id);saveSched();renderSched();} }
-    function updateSchedText(id, el) { const i = schedData.find(x=>x.id===id); if(i && i.content!==el.innerText){i.content=el.innerText;saveSched();showToast("已保存");} }
-
+    function toggleSchedDone(id) { const i = schedData.find(x=>x.id===id); if(i){i.manualDone=!i.manualDone;saveToLocal();renderSched();} }
+    function deleteSched(id) { if(confirm("删除此行程？")){ schedData=schedData.filter(x=>x.id!==id);saveToLocal();renderSched();} }
+    function updateSchedText(id, el) { const i = schedData.find(x=>x.id===id); if(i && i.content!==el.innerText){i.content=el.innerText;saveToLocal();} }
 </script>
 
 </body>
