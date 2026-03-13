@@ -330,6 +330,7 @@
     let cloudSaveTimer = null;
     let isCloudSaving = false;
     let hasPendingCloudSave = false;
+    let lastCloudSnapshot = '';
 
     document.addEventListener('DOMContentLoaded', () => {
         refreshHeaderDate();
@@ -353,6 +354,7 @@
                 todoData = data.todo || [];
                 schedData = data.sched || [];
                 console.log("云端数据加载成功", data);
+                lastCloudSnapshot = JSON.stringify({ todo: todoData, sched: schedData });
             } else {
                 console.error("云端加载失败，使用本地缓存");
                 loadFromLocal();
@@ -376,18 +378,22 @@
             return;
         }
 
-        const btn = document.getElementById('saveBtn');
-        const originalText = btn.innerHTML;
-        isCloudSaving = true;
-        
-        btn.innerHTML = '<span>⏳ 保存中...</span>';
-        btn.classList.add('loading');
-        btn.disabled = true;
-
         const payload = {
             todo: todoData,
             sched: schedData
         };
+        const payloadStr = JSON.stringify(payload);
+        if (payloadStr === lastCloudSnapshot) {
+            return;
+        }
+
+        const btn = document.getElementById('saveBtn');
+        const originalText = btn.innerHTML;
+        isCloudSaving = true;
+
+        btn.innerHTML = '<span>⏳ 保存中...</span>';
+        btn.classList.add('loading');
+        btn.disabled = true;
 
         try {
             const response = await fetch(BIN_URL, {
@@ -396,12 +402,16 @@
                     'Content-Type': 'application/json',
                     'X-Master-Key': API_KEY
                 },
-                body: JSON.stringify(payload)
+                body: payloadStr
             });
 
             if (response.ok) {
+                lastCloudSnapshot = payloadStr;
                 showToast("✅ 云端保存成功！");
                 saveToLocal(); // 保存成功后也更新本地
+            } else if (response.status === 409) {
+                hasPendingCloudSave = true;
+                showToast("⚠️ 检测到云端冲突，正在重试");
             } else {
                 showToast("❌ 保存失败，请检查网络");
             }
@@ -415,7 +425,7 @@
             btn.disabled = false;
             if (hasPendingCloudSave) {
                 hasPendingCloudSave = false;
-                saveToCloud();
+                setTimeout(() => saveToCloud(), 700);
             }
         }
     }
