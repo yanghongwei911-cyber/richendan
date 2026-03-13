@@ -64,15 +64,11 @@
         }
         h1 {
             margin: 0;
-            font-size: 30px;
+            font-size: 32px;
             font-weight: 900;
-            letter-spacing: 1px;
-            background: linear-gradient(90deg, #ff6b6b 0%, #ff9f43 22%, #feca57 44%, #1dd1a1 66%, #54a0ff 82%, #5f27cd 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 2px 0 rgba(255,255,255,0.9), 0 6px 12px rgba(95,39,205,0.18);
-            transform: rotate(-1deg);
+            letter-spacing: 0.5px;
+            color: #111827;
+            text-shadow: 0 2px 8px rgba(17,24,39,0.08);
             display: inline-block;
         }
         .subtitle { font-size: 12px; color: var(--text-sub); margin-top: 4px; text-transform: uppercase; letter-spacing: 2px; font-weight: 500;}
@@ -183,8 +179,8 @@
         }
 
         .task-row {
-            padding: 8px 10px; 
-            margin-bottom: 6px; 
+            padding: 6px 10px; 
+            margin-bottom: 3px; 
             border-radius: 8px; 
             background: #fff;
             border: 1px solid transparent; 
@@ -334,6 +330,7 @@
     let cloudSaveTimer = null;
     let isCloudSaving = false;
     let hasPendingCloudSave = false;
+    let lastCloudSnapshot = '';
 
     document.addEventListener('DOMContentLoaded', () => {
         refreshHeaderDate();
@@ -357,6 +354,7 @@
                 todoData = data.todo || [];
                 schedData = data.sched || [];
                 console.log("云端数据加载成功", data);
+                lastCloudSnapshot = JSON.stringify({ todo: todoData, sched: schedData });
             } else {
                 console.error("云端加载失败，使用本地缓存");
                 loadFromLocal();
@@ -380,18 +378,22 @@
             return;
         }
 
-        const btn = document.getElementById('saveBtn');
-        const originalText = btn.innerHTML;
-        isCloudSaving = true;
-        
-        btn.innerHTML = '<span>⏳ 保存中...</span>';
-        btn.classList.add('loading');
-        btn.disabled = true;
-
         const payload = {
             todo: todoData,
             sched: schedData
         };
+        const payloadStr = JSON.stringify(payload);
+        if (payloadStr === lastCloudSnapshot) {
+            return;
+        }
+
+        const btn = document.getElementById('saveBtn');
+        const originalText = btn.innerHTML;
+        isCloudSaving = true;
+
+        btn.innerHTML = '<span>⏳ 保存中...</span>';
+        btn.classList.add('loading');
+        btn.disabled = true;
 
         try {
             const response = await fetch(BIN_URL, {
@@ -400,12 +402,16 @@
                     'Content-Type': 'application/json',
                     'X-Master-Key': API_KEY
                 },
-                body: JSON.stringify(payload)
+                body: payloadStr
             });
 
             if (response.ok) {
+                lastCloudSnapshot = payloadStr;
                 showToast("✅ 云端保存成功！");
                 saveToLocal(); // 保存成功后也更新本地
+            } else if (response.status === 409) {
+                hasPendingCloudSave = true;
+                showToast("⚠️ 检测到云端冲突，正在重试");
             } else {
                 showToast("❌ 保存失败，请检查网络");
             }
@@ -419,7 +425,7 @@
             btn.disabled = false;
             if (hasPendingCloudSave) {
                 hasPendingCloudSave = false;
-                saveToCloud();
+                setTimeout(() => saveToCloud(), 700);
             }
         }
     }
@@ -599,10 +605,6 @@
             div.addEventListener('dragend', handleDragEnd);
         }
 
-        let pText = '普通', pClass = 'p-normal';
-        if(item.priority === 'important') { pText = '重要'; pClass = 'p-important'; }
-        if(item.priority === 'urgent') { pText = '紧急'; pClass = 'p-urgent'; }
-
         const seqHtml = !item.done ? `<div class="seq-num">${seqNum}.</div>` : '';
         const dragHtml = !item.done ? `<div class="drag-handle">⋮⋮</div>` : '';
 
@@ -613,7 +615,6 @@
                 <div class="content-wrapper">
                     <div class="editable-text ${item.done ? 'text-done' : ''}" contenteditable="true" onblur="updateText('${item.id}', this)">${item.content}</div>
                 </div>
-                <div class="priority-btn ${pClass}" onclick="changePriority('${item.id}')">${pText}</div>
                 <button class="btn-del" onclick="deleteTodo('${item.id}')">×</button>
             </div>
             <div class="remark-box" id="remark-box-${item.id}" style="display: ${item.remark ? 'block' : 'none'}">
@@ -639,15 +640,6 @@
     }
     function updateRemark(id, el) { const i = todoData.find(t=>t.id===id); if(i) { i.remark = el.value.trim(); persistAllData(); } }
     function toggleDone(id) { const i = todoData.find(t=>t.id===id); if(i){i.done=!i.done; persistAllData(); renderTodo();} }
-    function changePriority(id) { 
-        const i = todoData.find(t=>t.id===id); 
-        if(i){ 
-            if(i.priority==='normal')i.priority='important'; 
-            else if(i.priority==='important')i.priority='urgent'; 
-            else i.priority='normal'; 
-            persistAllData(); renderTodo();
-        } 
-    }
     function updateText(id, el) { const i = todoData.find(t=>t.id===id); if(i && i.content!==el.innerText){i.content=el.innerText; persistAllData();} }
     function deleteTodo(id) { if(confirm('删除此任务？')){ todoData=todoData.filter(t=>t.id!==id); persistAllData(); renderTodo();} }
 
